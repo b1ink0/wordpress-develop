@@ -155,6 +155,30 @@ function register_block_script_module_id( $metadata, $field_name, $index = 0 ) {
 		$module_id = $module_id[ $index ];
 	}
 
+	$allowed_keys = array(
+		'handle'        => 'handle',
+		'file'          => 'file',
+		'dependencies'  => 'dependencies',
+		'version'       => 'version',
+		'fetchpriority' => 'fetchpriority',
+	);
+
+	$module_details = array();
+	if ( is_array( $module_id ) ) {
+		foreach ( $allowed_keys as $source_key => $target_key ) {
+			if ( isset( $module_id[ $source_key ] ) ) {
+				$module_details[ $target_key ] = $module_id[ $source_key ];
+			}
+		}
+
+		if ( isset( $module_details['file'] ) ) {
+			$module_id = $module_details['file'];
+		} elseif ( isset( $module_details['handle'] ) ) {
+			// In this case it will be considered script will be registered using the provided handle later.
+			$module_id = $module_details['handle'];
+		}
+	}
+
 	$module_path = remove_block_asset_path_prefix( $module_id );
 	if ( $module_id === $module_path ) {
 		return $module_id;
@@ -182,6 +206,24 @@ function register_block_script_module_id( $metadata, $field_name, $index = 0 ) {
 		( isset( $metadata['supports']['interactivity']['interactive'] ) && true === $metadata['supports']['interactivity']['interactive'] )
 	) {
 		$args['fetchpriority'] = 'low';
+	}
+
+	if ( ! empty( $module_details ) ) {
+		if ( isset( $module_details['handle'] ) ) {
+			$module_id = $module_details['handle'];
+		}
+		if ( isset( $module_details['dependencies'] ) ) {
+			$module_dependencies = array_merge(
+				$module_dependencies,
+				(array) $module_details['dependencies']
+			);
+		}
+		if ( isset( $module_details['version'] ) ) {
+			$module_version = $module_details['version'];
+		}
+		if ( isset( $module_details['fetchpriority'] ) ) {
+			$args['fetchpriority'] = $module_details['fetchpriority'];
+		}
 	}
 
 	wp_register_script_module(
@@ -225,6 +267,33 @@ function register_block_script_handle( $metadata, $field_name, $index = 0 ) {
 		$script_handle_or_path = $script_handle_or_path[ $index ];
 	}
 
+	$allowed_keys = array(
+		'handle'        => 'handle',
+		'file'          => 'file',
+		'dependencies'  => 'dependencies',
+		'version'       => 'version',
+		'strategy'      => 'strategy',
+		'inFooter'      => 'in_footer',
+		'fetchpriority' => 'fetchpriority',
+	);
+
+	$script_details = array();
+	if ( is_array( $script_handle_or_path ) ) {
+		foreach ( $allowed_keys as $source_key => $target_key ) {
+			if ( isset( $script_handle_or_path[ $source_key ] ) ) {
+				$script_details[ $target_key ] = $script_handle_or_path[ $source_key ];
+			}
+		}
+
+		if ( isset( $script_details['file'] ) ) {
+			$script_handle_or_path = $script_details['file'];
+		} elseif ( isset( $script_details['handle'] ) ) {
+			// In this case it will be considered script will be registered using the provided handle later.
+			$script_handle_or_path = $script_details['handle'];
+		}
+	}
+
+
 	$script_path = remove_block_asset_path_prefix( $script_handle_or_path );
 	if ( $script_handle_or_path === $script_path ) {
 		return $script_handle_or_path;
@@ -253,6 +322,28 @@ function register_block_script_handle( $metadata, $field_name, $index = 0 ) {
 	$script_args         = array();
 	if ( 'viewScript' === $field_name && $script_uri ) {
 		$script_args['strategy'] = 'defer';
+	}
+
+	if ( count( $script_details ) > 0 ) {
+		if ( isset( $script_details['handle'] ) ) {
+			$script_handle = $script_details['handle'];
+		}
+		if ( isset( $script_details['dependencies'] ) ) {
+			$script_dependencies = array_merge(
+				$script_dependencies,
+				(array) $script_details['dependencies']
+			);
+		}
+		if ( isset( $script_details['version'] ) ) {
+			$script_version = $script_details['version'];
+		}
+
+		$script_arg_keys = array( 'strategy', 'in_footer', 'fetchpriority' );
+		foreach ( $script_arg_keys as $key ) {
+			if ( isset( $script_details[ $key ] ) ) {
+				$script_args[ $key ] = $script_details[ $key ];
+			}
+		}
 	}
 
 	$result = wp_register_script(
